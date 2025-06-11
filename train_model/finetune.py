@@ -4,6 +4,15 @@ from transformers import RobertaTokenizer, RobertaForSequenceClassification, Tra
 import torch
 import gc
 
+# Check GPU availability
+print(f"GPU available: {torch.cuda.is_available()}")
+if torch.cuda.is_available():
+    print(f"GPU device: {torch.cuda.get_device_name(0)}")
+    device = torch.device("cuda")
+else:
+    print("No GPU available, using CPU")
+    device = torch.device("cpu")
+
 # Enable aggressive garbage collection
 gc.enable()
 
@@ -48,25 +57,25 @@ dataset.set_format(type="torch", columns=["input_ids", "attention_mask", "labels
 dataset = dataset.train_test_split(test_size=0.1)
 
 # Load and prepare the model
-model = RobertaForSequenceClassification.from_pretrained("roberta-base")
+model = RobertaForSequenceClassification.from_pretrained("roberta-base").to(device)
 model.gradient_checkpointing_enable()  # Enable gradient checkpointing
 
 # Set up training arguments
 training_args = TrainingArguments(
     output_dir="./roberta-fake-news",
     num_train_epochs=3,
-    per_device_train_batch_size=2,  # Further reduced batch size
-    per_device_eval_batch_size=2,  # Further reduced batch size
+    per_device_train_batch_size=4,  # Increased from 2 to 4
+    per_device_eval_batch_size=4,  # Increased from 2 to 4
     save_total_limit=1,
     evaluation_strategy="epoch",
     save_strategy="epoch",
     load_best_model_at_end=True,
     metric_for_best_model="eval_loss",
-    gradient_accumulation_steps=4,  # Increased gradient accumulation steps
-    gradient_checkpointing=True,  # Enable gradient checkpointing
-    optim="adafactor",  # Use memory efficient optimizer
-    dataloader_num_workers=0,  # Reduce memory overhead from dataloading
-    group_by_length=True  # Group sequences of similar length to minimize padding
+    gradient_accumulation_steps=2,  # Reduced from 4 to 2 to maintain same effective batch size
+    gradient_checkpointing=True,
+    optim="adafactor",
+    dataloader_num_workers=0,
+    group_by_length=True
 )
 
 # Initialize trainer
