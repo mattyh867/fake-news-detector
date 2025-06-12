@@ -96,5 +96,9 @@ clear_memory()
 model.save_pretrained("../backend/model")
 tokenizer.save_pretrained("../backend/model/tokenizer")
 
+# After training completes
+model.push_to_hub("mattyh867/fake-news-detector")
+tokenizer.push_to_hub("mattyh867/fake-news-detector")
+
 # Final memory cleanup
 clear_memory()
